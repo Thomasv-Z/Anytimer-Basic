@@ -1,11 +1,11 @@
-"use client";
 import React, { useEffect, useState } from "react";
-// @material-tailwind/react
 import { Input, Button, Typography } from "@material-tailwind/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import Popup from "./popup"; // Import the popup component
 
 export function Campaign() {
   const [data, setData] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [newEntry, setNewEntry] = useState<{ uid: string; time: number } | null>(null);
   const endpoint = "a1b2c3"; // Change this to your actual endpoint
 
   useEffect(() => {
@@ -29,6 +29,44 @@ export function Campaign() {
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, [endpoint]);
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:3000'); // Connect to WebSocket server
+
+    ws.onmessage = (event) => {
+      const newScore = JSON.parse(event.data);
+      setNewEntry({ uid: newScore.uid, time: newScore.time });
+      setShowPopup(true); // Show the popup when new data arrives
+    };
+
+    return () => {
+      ws.close(); // Close the WebSocket connection when component unmounts
+    };
+  }, []);
+
+  const handleSaveName = async (name: string) => {
+    if (newEntry) {
+      try {
+        const response = await fetch('http://localhost:3000/api/user/saveUser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: newEntry.uid, name })
+        });
+        const result = await response.json();
+        console.log('User saved successfully:', result);
+        setShowPopup(false); // Hide the popup after saving the name
+        // Optionally, refresh the data
+        const updatedData = await fetchData();
+        setData(updatedData);
+      } catch (error) {
+        console.error('Error saving user:', error);
+      }
+    }
+  };
+
+  const handleDiscard = () => {
+    setShowPopup(false); // Hide the popup if discarded
+  };
 
   return (
     <section className="container mx-auto py-20 px-8">
@@ -55,12 +93,21 @@ export function Campaign() {
           </tbody>
         </table>
       </div>
+      {/* Render popup if needed */}
+      {showPopup && newEntry && (
+        <Popup
+          uid={newEntry.uid}
+          time={newEntry.time}
+          onSave={handleSaveName}
+          onDiscard={handleDiscard}
+        />
+      )}
     </section>
   );
 }
 
 // Function to format time from milliseconds
-function formatTime(ms) {
+function formatTime(ms: number) {
   if (ms < 1000) return `${ms} ms`;
   const seconds = Math.floor(ms / 1000);
   const milliseconds = ms % 1000;
