@@ -4,7 +4,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 export function Footer() {
   return (
-    <footer className="fixed bottom-0 left-0 w-full px-8 pt-15 pb-8 bg-white shadow-lg">
+    <footer className="fixed bottom-0 left-0 w-full px-8 pt-8 pb-8 bg-white shadow-lg">
       <div className="container max-w-6xl mx-auto flex justify-center">
         <Typography
           color="blue-gray"

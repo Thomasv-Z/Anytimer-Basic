@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Input, Button, Typography, Select, Option } from "@material-tailwind/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { Input, Select, Option } from "@material-tailwind/react";
 
 // Define the Campaign component
 export function Campaign() {
@@ -9,14 +8,12 @@ export function Campaign() {
   const [error, setError] = useState(null);
 
   // State for sorting
-  const [sortField, setSortField] = useState("date"); // Default sort by date
+  const [sortField, setSortField] = useState("time"); // Default sort by date
   const [sortOrder, setSortOrder] = useState("asc"); // Default sort order: ascending
 
   // State for filters
   const [nameFilter, setNameFilter] = useState("");
   const [uidFilter, setUidFilter] = useState("");
-  const [minTimeFilter, setMinTimeFilter] = useState("");
-  const [maxTimeFilter, setMaxTimeFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
   const endpoint = "a1b2c3"; // Change this to your actual endpoint
@@ -69,13 +66,13 @@ const sortData = (data) => {
         bValue = b.uid || "";
         break;
       case 'time':
+      default:
         aValue = Number(a.time) || 0; // Ensure time is a number
         bValue = Number(b.time) || 0; // Ensure time is a number
         break;
       case 'date':
-      default:
-        aValue = new Date(a.date).getTime();
-        bValue = new Date(b.date).getTime();
+        aValue = new Date(a.date).getDate();
+        bValue = new Date(b.date).getDate();
         break;
     }
 
@@ -87,17 +84,16 @@ const sortData = (data) => {
   });
 };
 
+const filteredData = data.filter(item => {
+  const matchesName = nameFilter === "" || (item.name && item.name.toLowerCase().includes(nameFilter.toLowerCase()));
+  const matchesUid = uidFilter === "" || (item.uid && item.uid.toLowerCase().includes(uidFilter.toLowerCase()));
 
+  // Convert item.date to a comparable date string
+  const itemDate = new Date(item.date).toLocaleDateString('en-GB'); // Change to desired locale if needed
+  const matchesDate = dateFilter === "" || itemDate === dateFilter;
 
-  // Filtered and sorted data
-  const filteredData = data.filter(item => {
-
-    const matchesName = nameFilter === "" || (item.name && item.name.toLowerCase().includes(nameFilter.toLowerCase()));
-    const matchesUid = uidFilter === "" || (item.uid && item.uid.toLowerCase().includes(uidFilter.toLowerCase()));
-    const matchesDate = dateFilter === "" || (new Date(item.date).toLocaleDateString() === dateFilter);
-
-    return matchesName && matchesUid && matchesDate;
-  });
+  return matchesName && matchesUid && matchesDate;
+});
 
   const sortedData = sortData(filteredData);
 
