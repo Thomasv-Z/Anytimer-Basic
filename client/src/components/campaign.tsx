@@ -1,8 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-// @material-tailwind/react
-import { Input, Button, Typography } from "@material-tailwind/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 
 export function Campaign() {
   const [data, setData] = useState([]);
@@ -14,7 +11,12 @@ export function Campaign() {
       try {
         const response = await fetch(`http://localhost:3000/api/${endpoint}`);
         const result = await response.json();
-        setData(result);
+        // Ensure result is an array before setting state
+        if (Array.isArray(result)) {
+          setData(result);
+        } else {
+          console.error("Fetched data is not an array:", result);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -44,14 +46,20 @@ export function Campaign() {
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
-              <tr key={item._id}>
-                <td className="py-2 px-4 border-b">{item.name || "N/A"}</td>
-                <td className="py-2 px-4 border-b">{item.uid}</td>
-                <td className="py-2 px-4 border-b">{formatTime(item.time)}</td>
-                <td className="py-2 px-4 border-b">{new Date(item.date).toLocaleDateString()}</td>
+            {Array.isArray(data) && data.length > 0 ? (
+              data.map((item) => (
+                <tr key={item._id}>
+                  <td className="py-2 px-4 border-b">{item.name || "N/A"}</td>
+                  <td className="py-2 px-4 border-b">{item.uid}</td>
+                  <td className="py-2 px-4 border-b">{formatTime(item.time)}</td>
+                  <td className="py-2 px-4 border-b">{new Date(item.date).toLocaleDateString()}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="py-2 px-4 border-b text-center">No data available</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

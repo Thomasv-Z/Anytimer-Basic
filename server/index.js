@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dbConnect = require("./db/dbConnect");
 const DataSchema = require("./db/resDataModel");
+const userSchema = require('./db/userModel');
 const path = require('path');
 const mongoose = require('mongoose');
 const WebSocket = require('ws');
@@ -48,7 +49,8 @@ async function saveData(req, res) {
   }
 }
 
-// Define other HTTP endpoints
+const User = mongoose.model('User', userSchema);
+
 app.get("/api/:randomEndpoint", async (req, res) => {
   const randomEndpoint = req.params['randomEndpoint'];
   try {
@@ -56,8 +58,31 @@ app.get("/api/:randomEndpoint", async (req, res) => {
     if (!DynamicModel) {
       return res.status(404).json({ message: 'Model not found' });
     }
+
+    // Fetch data from the dynamic model
     const data = await DynamicModel.find();
-    res.status(200).json(data);
+
+    // Fetch user names based on UID and enhance data
+    const enhancedData = await Promise.all(data.map(async (item) => {
+      try {
+        // Find the user by UID
+        const user = await User.findOne({ uid: item.uid });
+        // Return the data with user name or null if user is not found
+        return {
+          ...item.toObject(),
+          name: user ? user.name : null, // Adjust field if needed
+
+        };
+      } catch (userError) {
+        console.error('Error fetching user data:', userError);
+        return {
+          ...item.toObject(),
+          name: null,
+        };
+      }
+    }));
+
+    res.status(200).json(enhancedData);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ message: 'Error fetching data' });
